@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Portfolio Matcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 AI Portfolio Matcher</h1>
+    <p>Get smart project suggestions based on your skills!</p>
+    
+    <form id="skillForm">
+      <label>What technologies do you know?</label>
+      <input type="text" id="skills" placeholder="e.g., React, Python, Tailwind" required>
+
+      <label>What kind of projects do you enjoy?</label>
+      <select id="interest">
+        <option value="web">Web Apps</option>
+        <option value="ml">Machine Learning</option>
+        <option value="game">Games</option>
+        <option value="utility">Utilities</option>
+      </select>
+
+      <label>Preferred working style:</label>
+      <div class="radio-group">
+        <label><input type="radio" name="team" value="solo" checked> Solo</label>
+        <label><input type="radio" name="team" value="team"> Team</label>
+      </div>
+
+      <button type="submit">🔍 Suggest Projects</button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
