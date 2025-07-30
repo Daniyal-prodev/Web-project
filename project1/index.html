@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auto Resume Analyzer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to right, #1e3a8a, #1e40af);
+    }
+    .glass {
+      backdrop-filter: blur(10px);
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-white">
+  <div class="glass p-10 rounded-xl max-w-3xl w-full">
+    <h1 class="text-3xl font-bold mb-6 text-center">Auto Resume Analyzer</h1>
+    <input type="file" id="resumeInput" class="mb-4 w-full text-black bg-white p-2 rounded" accept=".pdf,.docx" />
+    <div id="analysis" class="mt-6 space-y-3"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script>
+    const resumeInput = document.getElementById('resumeInput');
+    const analysis = document.getElementById('analysis');
+
+    resumeInput.addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      analysis.innerHTML = `<p class='animate-pulse'>Analyzing resume... 🧠</p>`;
+
+      if (file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = async function () {
+          const typedArray = new Uint8Array(this.result);
+          const pdf = await pdfjsLib.getDocument(typedArray).promise;
+
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(i => i.str).join(' ');
+            fullText += pageText + ' ';
+          }
+          analyzeText(fullText);
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        analysis.innerHTML = `<p class='text-red-500'>Unsupported file type. Only PDF for now.</p>`;
+      }
+    });
+
+    function analyzeText(text) {
+      const lower = text.toLowerCase();
+      const feedback = [];
+
+      if (!lower.includes('email')) feedback.push('❌ Email not found');
+      if (!lower.includes('experience')) feedback.push('❌ Experience section missing');
+      if (!lower.includes('education')) feedback.push('❌ Education section missing');
+      if (!lower.includes('react') && !lower.includes('javascript')) feedback.push('⚠️ Add relevant technical keywords');
+      if (text.length < 1000) feedback.push('⚠️ Resume may be too short');
+
+      if (feedback.length === 0) {
+        feedback.push('✅ Your resume looks solid!');
+      }
+
+      analysis.innerHTML = feedback.map(f => `<div class='bg-white bg-opacity-10 p-3 rounded'>${f}</div>`).join('');
+    }
+  </script>
+</body>
+</html>
