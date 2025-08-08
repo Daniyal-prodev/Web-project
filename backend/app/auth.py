@@ -4,8 +4,8 @@ import hashlib
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-me")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "aribdaniyal88@gmail.com")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "daniyaldanish88")
 ADMIN_SECRET = os.getenv("ADMIN_SECRET", ADMIN_PASSWORD)
 
 security = HTTPBearer()

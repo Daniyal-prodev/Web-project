@@ -79,3 +79,16 @@ class PayoneerWebhook(BaseModel):
     amount_cents: int
     order_id: Optional[str] = None
     signature: Optional[str] = None
+
+class CustomerSignup(BaseModel):
+    email: str
+    password: str
+    name: Optional[str] = None
+
+class CustomerLogin(BaseModel):
+    email: str
+    password: str
+
+class CustomerMe(BaseModel):
+    email: str
+    name: Optional[str] = None
