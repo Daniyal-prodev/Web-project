@@ -12,6 +12,8 @@ export default function RootLayout() {
           </Link>
           <nav className="flex items-center gap-4">
             <NavLink to="/catalog" className="text-sm hover:text-pink-600">Catalog</NavLink>
+            <NavLink to="/about" className="text-sm hover:text-pink-600">About</NavLink>
+            <NavLink to="/contact" className="text-sm hover:text-pink-600">Contact</NavLink>
             <NavLink to="/cart" className="text-sm hover:text-pink-600 flex items-center gap-1">
               <ShoppingCart size={18} /> Cart
             </NavLink>

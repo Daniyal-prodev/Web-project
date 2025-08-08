@@ -15,6 +15,11 @@ export async function apiAuthPost<T>(path: string, body: any, token?: string): P
     },
     body: JSON.stringify(body),
   });
+  if (res.status === 401) {
+    localStorage.removeItem("admin_token");
+    if (typeof window !== "undefined") window.location.href = "/secret-admin/login";
+    throw new Error("Unauthorized");
+  }
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -28,6 +33,11 @@ export async function apiAuthed<T>(method: string, path: string, body: any, toke
     },
     body: JSON.stringify(body),
   });
+  if (res.status === 401) {
+    localStorage.removeItem("admin_token");
+    if (typeof window !== "undefined") window.location.href = "/secret-admin/login";
+    throw new Error("Unauthorized");
+  }
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }

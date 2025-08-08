@@ -13,6 +13,14 @@ class ProductBase(BaseModel):
     downloadable_asset_id: Optional[str] = None
     visible: bool = True
     inventory: Optional[int] = None
+    tags: List[str] = []
+    featured: bool = False
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    images: List[HttpUrl] = []
+    description_sections: List[str] = []
+    sale_price_cents: Optional[int] = Field(default=None, ge=0)
+    discount_percent: Optional[int] = Field(default=None, ge=0, le=100)
 
 class ProductCreate(ProductBase):
     pass
@@ -28,6 +36,14 @@ class ProductUpdate(BaseModel):
     downloadable_asset_id: Optional[str] = None
     visible: Optional[bool] = None
     inventory: Optional[int] = None
+    tags: Optional[List[str]] = None
+    featured: Optional[bool] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    images: Optional[List[HttpUrl]] = None
+    description_sections: Optional[List[str]] = None
+    sale_price_cents: Optional[int] = Field(default=None, ge=0)
+    discount_percent: Optional[int] = Field(default=None, ge=0, le=100)
 
 class Product(ProductBase):
     id: str

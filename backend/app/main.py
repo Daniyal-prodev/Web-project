@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import status
 from typing import Dict, List
 from datetime import datetime
 import uuid
+import os
+import hmac
+import hashlib
 from .schemas import Product, ProductCreate, ProductUpdate, LoginRequest, LoginResponse, OrderCreate, Order, PayoneerWebhook
 from .auth import authenticate, require_admin
 
@@ -11,7 +13,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[os.getenv("FRONTEND_ORIGIN", "*")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,7 +84,10 @@ def create_order(payload: OrderCreate):
         prod = _products[item.product_id]
         if not prod.visible:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product not available")
-        total += prod.price_cents * item.quantity
+        base_price = prod.price_cents
+        sale_price = prod.sale_price_cents if prod.sale_price_cents is not None and prod.sale_price_cents >= 0 else None
+        price = sale_price if sale_price is not None else base_price
+        total += price * item.quantity
     oid = str(uuid.uuid4())
     order = Order(
         id=oid,
@@ -95,15 +100,25 @@ def create_order(payload: OrderCreate):
     _orders[oid] = order
     return order
 
+@app.post("/payments/payoneer/checkout-intent")
+def payoneer_checkout_intent(payload: OrderCreate):
+    merchant_id = os.getenv("PAYONEER_MERCHANT_ID", "")
+    api_key = os.getenv("PAYONEER_API_KEY", "")
+    api_secret = os.getenv("PAYONEER_API_SECRET", "")
+    if not merchant_id or not api_key or not api_secret:
+        return {"status": "disabled", "message": "Payoneer not configured", "redirect_url": None}
+    fake_redirect = f"https://payoneer.example/checkout/{uuid.uuid4()}"
+    return {"status": "ok", "redirect_url": fake_redirect}
+
 @app.post("/webhooks/payoneer")
-def payoneer_webhook(payload: PayoneerWebhook):
-    oid = payload.order_id
-    if not oid or oid not in _orders:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown order")
-    order = _orders[oid]
-    order.status = "paid"
-    order.download_tokens = [str(uuid.uuid4()) for _ in order.items]
-    _orders[oid] = order
+async def payoneer_webhook(request: Request):
+    secret = os.getenv("PAYONEER_WEBHOOK_SECRET", "")
+    body = await request.body()
+    signature = request.headers.get("X-Payoneer-Signature", "")
+    if secret:
+        expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(signature or "", expected):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid signature")
     return {"ok": True}
 
 @app.get("/orders/{order_id}", response_model=Order)
