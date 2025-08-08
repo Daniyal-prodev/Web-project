@@ -1,6 +1,29 @@
 import { Link, Outlet, NavLink } from "react-router-dom";
 import { ShoppingCart, BookOpen } from "lucide-react";
 
+function AuthLinks() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("customer_token") : null;
+  if (token) {
+    return (
+      <>
+        <NavLink to="/account" className="text-sm hover:text-pink-600">Account</NavLink>
+        <button
+          className="text-sm hover:text-pink-600"
+          onClick={() => { localStorage.removeItem("customer_token"); window.location.href = "/"; }}
+        >
+          Logout
+        </button>
+      </>
+    );
+  }
+  return (
+    <>
+      <NavLink to="/login" className="text-sm hover:text-pink-600">Login</NavLink>
+      <NavLink to="/signup" className="text-sm hover:text-pink-600">Sign up</NavLink>
+    </>
+  );
+}
+
 export default function RootLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-pink-50 to-blue-50">
@@ -14,6 +37,7 @@ export default function RootLayout() {
             <NavLink to="/catalog" className="text-sm hover:text-pink-600">Catalog</NavLink>
             <NavLink to="/about" className="text-sm hover:text-pink-600">About</NavLink>
             <NavLink to="/contact" className="text-sm hover:text-pink-600">Contact</NavLink>
+            <AuthLinks />
             <NavLink to="/cart" className="text-sm hover:text-pink-600 flex items-center gap-1">
               <ShoppingCart size={18} /> Cart
             </NavLink>

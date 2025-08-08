@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Dict, List
 from datetime import datetime
 import uuid
 import os
 import hmac
 import hashlib
-from .schemas import Product, ProductCreate, ProductUpdate, LoginRequest, LoginResponse, OrderCreate, Order, PayoneerWebhook
+from .schemas import Product, ProductCreate, ProductUpdate, LoginRequest, LoginResponse, OrderCreate, Order, PayoneerWebhook, CustomerSignup, CustomerLogin, CustomerMe
 from .auth import authenticate, require_admin
 
 app = FastAPI()
@@ -19,8 +20,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+security = HTTPBearer()
+
 _products: Dict[str, Product] = {}
 _orders: Dict[str, Order] = {}
+_customers: Dict[str, Dict[str, str]] = {}
+
+CUSTOMER_SECRET = os.getenv("CUSTOMER_SECRET", os.getenv("ADMIN_SECRET", "change-me"))
+
+def _sign_customer(email: str) -> str:
+    sig = hmac.new(CUSTOMER_SECRET.encode(), email.encode(), hashlib.sha256).hexdigest()
+    return f"{email}.c.{sig}"
+
+def _verify_customer(token: str) -> str | None:
+    try:
+        email, kind, sig = token.split(".", 2)
+    except ValueError:
+        return None
+    if kind != "c":
+        return None
+    expected = hmac.new(CUSTOMER_SECRET.encode(), email.encode(), hashlib.sha256).hexdigest()
+    if hmac.compare_digest(sig, expected):
+        return email
+    return None
 
 @app.get("/healthz")
 async def healthz():
@@ -30,6 +52,34 @@ async def healthz():
 def login(payload: LoginRequest):
     token = authenticate(payload.email, payload.password)
     return LoginResponse(access_token=token)
+
+@app.post("/auth/customer/signup", response_model=LoginResponse)
+def customer_signup(payload: CustomerSignup):
+    if payload.email in _customers:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Account already exists")
+    _customers[payload.email] = {"password": payload.password, "name": payload.name or ""}
+    token = _sign_customer(payload.email)
+    return LoginResponse(access_token=token)
+
+@app.post("/auth/customer/login", response_model=LoginResponse)
+def customer_login(payload: CustomerLogin):
+    user = _customers.get(payload.email)
+    if not user or user.get("password") != payload.password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    token = _sign_customer(payload.email)
+    return LoginResponse(access_token=token)
+
+@app.get("/me", response_model=CustomerMe)
+def me(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    email = _verify_customer(credentials.credentials)
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    user = _customers.get(email, {})
+    return CustomerMe(email=email, name=user.get("name") or None)
+
+@app.post("/contact")
+def contact():
+    return {"ok": True}
 
 @app.get("/products", response_model=List[Product])
 def list_products(visible_only: bool = True):
