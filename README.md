@@ -21,7 +21,7 @@ Note: Backend uses an in-memory store for now to keep things simple for a first 
 ### Backend
 1) Copy env
 cp backend/.env.example backend/.env
-Edit ADMIN_EMAIL and ADMIN_PASSWORD. Add Payoneer credentials when available.
+Edit ADMIN_EMAIL and ADMIN_PASSWORD. Optionally set ADMIN_SECRET to sign stateless admin tokens (defaults to ADMIN_PASSWORD). Add Payoneer credentials when available.
 
 2) Install deps
 cd backend
