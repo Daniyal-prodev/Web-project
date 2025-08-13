@@ -58,7 +58,8 @@
             const newText = textInput.value;
             if (newText.trim() !== '') {
                 if (newText.length > 50) {
-                    contentBox.textContent = 'Text is too long! Please keep it under 50 characters.';
+                    let warn = contentBox.textContent = 'Text is too long! Please keep it under 50 characters.';
+                     let red = contentBox.style.color = 'red';
                 } else {
                     contentBox.textContent = newText;
                 }
@@ -77,3 +78,4 @@
     </script>
 </body>
 </html>
+
